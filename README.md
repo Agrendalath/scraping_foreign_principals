@@ -41,14 +41,15 @@ The output will be in `output.json` file. Single row has the following format:
 }
 ```
 
-### Testing
-To run tests, run:
-
-    python scraping_foreign_principals/tests.py 
-
 ### Additional parameters
 If you want to change number of principals that are downloaded at once, you can provide extra argument:
 
     pipenv run scrapy crawl principals -o output.json -a rows=30
     
 By default, 30 rows are downloaded.
+
+### Testing
+To run tests, run:
+
+    pipenv run python scraping_foreign_principals/tests.py 
+
