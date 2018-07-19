@@ -25,22 +25,24 @@ class PrincipalsSpider(scrapy.Spider):
         """
         Parse initial site.
         Remove grouping by countries and gather data for POST requests.
+        These requests will allow getting only table; therefore, the response
+        size will be lower.
         """
         url = 'https://efile.fara.gov/pls/apex/wwv_flow.show'
         headers = {
             'Cookie': response.request.headers['Cookie'].decode('utf-8')
         }
         form_data = {
-            'p_widget_action_mod': self.generate_next_page_action(0),
+            'p_widget_action_mod': self._generate_next_page_action(0),
             'p_instance': response.xpath(
                 '//input[@name="p_instance"]/@value').extract_first(),
             'p_request': 'APXWGT',
             'p_flow_id': '185',
             'p_flow_step_id': '130',
             'p_widget_name': 'worksheet',
+            'p_widget_num_return': str(self.ROWS_FETCH),
             'x01': response.xpath(
                 '//input[@id="apexir_WORKSHEET_ID"]/@value').extract_first(),
-            'p_widget_num_return': str(self.ROWS_FETCH)
         }
         oneshot = deepcopy(form_data)
         disable_country_grouping = {
@@ -54,7 +56,7 @@ class PrincipalsSpider(scrapy.Spider):
         request = scrapy.FormRequest(
             url=url,
             headers=headers,
-            callback=self.parse_principals,
+            callback=self._parse_principals,
             formdata=oneshot,
         )
 
@@ -64,7 +66,7 @@ class PrincipalsSpider(scrapy.Spider):
         request.meta['first_row'] = 0
         yield request
 
-    def generate_next_page_action(self, from_: int) -> str:
+    def _generate_next_page_action(self, from_: int) -> str:
         """
         Generate param for requesting next paginated data set.
         """
@@ -72,7 +74,7 @@ class PrincipalsSpider(scrapy.Spider):
                f'{self.ROWS_FETCH} '
 
     @staticmethod
-    def retrieve_table_field(response: HtmlResponse) -> \
+    def _retrieve_table_field(response: HtmlResponse) -> \
             Generator[Selector, None, None]:
         """
         Yield single table cell.
@@ -81,7 +83,7 @@ class PrincipalsSpider(scrapy.Spider):
             yield field
 
     @staticmethod
-    def extract_next(field: Iterator[Selector]) -> Union[str, None]:
+    def _extract_next(field: Iterator[Selector]) -> Union[str, None]:
         """
         Extract text from Selector from Iterator. Strip whitespaces.
         """
@@ -90,7 +92,7 @@ class PrincipalsSpider(scrapy.Spider):
             return result.strip()
 
     @staticmethod
-    def parse_date(date: str) -> Union[str, None]:
+    def _parse_date(date: str) -> Union[str, None]:
         """
         Parse date to RFC 3339 (https://tools.ietf.org/html/rfc3339).
         """
@@ -102,13 +104,13 @@ class PrincipalsSpider(scrapy.Spider):
 
         return result
 
-    def parse_principals(self, response: HtmlResponse):
+    def _parse_principals(self, response: HtmlResponse):
         """
         Parse principal and yield to retrieve one's documents.
         Parsing documents is not cached because different principals of the
         same country can have the same documents.
         """
-        field = self.retrieve_table_field(response)
+        field = self._retrieve_table_field(response)
 
         processed_rows = 0
         while True:
@@ -116,13 +118,13 @@ class PrincipalsSpider(scrapy.Spider):
                 data = {
                     'url': response.urljoin(
                         next(field).css('a::attr(href)').extract_first()),
-                    'foreign_principal': self.extract_next(field),
-                    'date': self.parse_date(self.extract_next(field)),
-                    'address': self.extract_next(field),
-                    'state': self.extract_next(field),
-                    'country': self.extract_next(field),
-                    'registrant': self.extract_next(field),
-                    'reg_num': self.extract_next(field),
+                    'foreign_principal': self._extract_next(field),
+                    'date': self._parse_date(self._extract_next(field)),
+                    'address': self._extract_next(field),
+                    'state': self._extract_next(field),
+                    'country': self._extract_next(field),
+                    'registrant': self._extract_next(field),
+                    'reg_num': self._extract_next(field),
                     # TODO: Find out what to do about the one below.
                     # 'reg_date': self.parse_date(self.extract_next(field)),
 
@@ -131,7 +133,7 @@ class PrincipalsSpider(scrapy.Spider):
 
                 documents_request = scrapy.Request(
                     url=data['url'],
-                    callback=self.parse_documents,
+                    callback=self._parse_documents,
                     dont_filter=True,
                 )
                 documents_request.meta['data'] = data
@@ -142,19 +144,19 @@ class PrincipalsSpider(scrapy.Spider):
 
             processed_rows += 1
 
-        if not processed_rows:
+        if processed_rows < self.ROWS_FETCH:
             return
 
         meta = response.meta
         meta['first_row'] += processed_rows
         meta['form_data']['p_widget_action_mod'] = \
-            self.generate_next_page_action(meta['first_row'])
+            self._generate_next_page_action(meta['first_row'])
 
         request = scrapy.FormRequest(
             url=meta['url'],
             headers=meta['headers'],
             formdata=meta['form_data'],
-            callback=self.parse_principals,
+            callback=self._parse_principals,
         )
 
         for s in ['url', 'headers', 'form_data', 'first_row']:
@@ -163,7 +165,7 @@ class PrincipalsSpider(scrapy.Spider):
         yield request
 
     @staticmethod
-    def parse_documents(response: HtmlResponse):
+    def _parse_documents(response: HtmlResponse):
         """
         Parse principal's documents.
         """
