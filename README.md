@@ -1,4 +1,8 @@
 # Scraping Foreign Principals
+[![CircleCI](https://circleci.com/gh/Agrendalath/scraping_foreign_principals.svg?style=svg&circle-token=07743d9fae3c83cf1037cb9e31536eff6dd98978)](https://circleci.com/gh/Agrendalath/scraping_foreign_principals)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
+
 The following projects was created for scraping Active Foreign Principals from [FARA](https://www.fara.gov/quick-search.html).
 
 ## Installation
