@@ -7,7 +7,7 @@
 
 import scrapy
 
-
+# pylint: disable=R0901
 class ScrapingForeignPrincipalsItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()

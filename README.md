@@ -53,3 +53,13 @@ To run tests, run:
 
     pipenv run python scraping_foreign_principals/tests.py 
 
+
+### Linters
+To run formatting checks (pylint and black), you need to install dev dependencies with:
+    
+    pipenv sync --dev
+    
+Then issue the following commands:
+
+    pipenv run pylint scraping_foreign_principals
+    pipenv run black --check -Sl 80 scraping_foreign_principals

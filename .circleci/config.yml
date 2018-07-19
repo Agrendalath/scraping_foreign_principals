@@ -28,13 +28,16 @@ jobs:
           key: v1-dependencies-{{ checksum "Pipfile.lock" }}
 
       - run:
+          name: run linters
+          command: |
+            pipenv run pylint scraping_foreign_principals
+            pipenv run black --check -Sl 80 scraping_foreign_principals
+
+      - run:
           name: run tests
           command: |
+            pipenv check
             pipenv run python scraping_foreign_principals/tests.py
             rm scraping_foreign_principals/test_responses/results.json
-            pipenv run scrapy crawl principals -o scraping_foreign_principals/test_responses/results.json
+            pipenv run scrapy crawl principals -o scraping_foreign_principals/test_responses/results.json 2>/dev/null
             pipenv run python scraping_foreign_principals/tests.py
-
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports

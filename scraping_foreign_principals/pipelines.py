@@ -6,6 +6,7 @@
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 
+# pylint: disable=R0205, W0613, R0201, R0903
 class ScrapingForeignPrincipalsPipeline(object):
     def process_item(self, item, spider):
         return item
