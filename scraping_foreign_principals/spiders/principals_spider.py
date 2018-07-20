@@ -33,9 +33,10 @@ class PrincipalsSpider(scrapy.Spider):
         size will be lower.
         """
         url = 'https://efile.fara.gov/pls/apex/wwv_flow.show'
+        first_row = 1
         headers = {'Cookie': response.request.headers['Cookie'].decode('utf-8')}
         form_data = {
-            'p_widget_action_mod': self._generate_next_page_action(0),
+            'p_widget_action_mod': self._generate_next_page_action(first_row),
             'p_instance': response.xpath(
                 '//input[@name="p_instance"]/@value'
             ).extract_first(),
@@ -67,7 +68,7 @@ class PrincipalsSpider(scrapy.Spider):
         request.meta['url'] = url
         request.meta['headers'] = headers
         request.meta['form_data'] = form_data
-        request.meta['first_row'] = 0
+        request.meta['first_row'] = first_row
         yield request
 
     def _generate_next_page_action(self, from_: int) -> str:
@@ -176,5 +177,5 @@ class PrincipalsSpider(scrapy.Spider):
         data = response.meta['data']
         data['exhibit_url'] = response.css(
             'td[headers=DOCLINK] ::attr(href)'
-        ).extract()
+        ).extract_first()
         yield data

@@ -74,11 +74,20 @@ class PrincipalsSpiderTest(unittest.TestCase):
             )
         )
 
-        self.assertTrue(isinstance(results.get('exhibit_url'), list))
-        self.assertEqual(28, len(results['exhibit_url']))
+        self.assertIsNotNone(results.get('exhibit_url'))
 
-        for document in results['exhibit_url']:
-            self.assertIsNotNone(document)
+    def test_parse_documents_empty(self):
+        """
+        Test parsing empty documents site.
+        """
+        results = next(
+            self.spider._parse_documents(
+                fake_response_from_file('documents_empty.html')
+            )
+        )
+
+        self.assertTrue('exhibit_url' in results)
+        self.assertIsNone(results['exhibit_url'])
 
     def test_parse_date(self):
         """
@@ -94,10 +103,10 @@ class PrincipalsSpiderTest(unittest.TestCase):
 
     def test_results(self):
         """
-        Test if all params (except `state`) are not None.
-        Also check if `exhibit_url` is a list.
+        Test if all params (except `state` and `exhibit_url`) are not None.
         """
         keys = ['url', 'country', 'reg_num', 'address', 'date', 'registrant']
+        optional = ['state', 'exhibit_url']  # can be None
 
         script_dir = os.path.dirname(os.path.realpath(__file__))
         results_rel_path = 'test_responses/results.json'
@@ -108,8 +117,8 @@ class PrincipalsSpiderTest(unittest.TestCase):
             for key in keys:
                 self.assertIsNotNone(row.get(key))
 
-            self.assertTrue('state' in row)  # state can be None
-            self.assertTrue(isinstance(row.get('exhibit_url'), list))
+            for key in optional:
+                self.assertTrue(key in row)
 
 
 if __name__ == '__main__':
